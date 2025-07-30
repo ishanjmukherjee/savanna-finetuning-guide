@@ -50,8 +50,8 @@ python extend_filter.py \
       --overwrite
 ```
 
-* Clone [savanna](https://github.com/Zymrael/savanna) and execute make
-  setup-env. Make sure you clone the latest version of savanna which contains
+* Clone [savanna](https://github.com/Zymrael/savanna) and execute `make
+  setup-env`. Make sure you clone the latest version of savanna which contains
   [this pull request](https://github.com/Zymrael/savanna/pull/9); this PR makes
   setup easier.
 * Edit the Slurm script `finetune_launch.slurm` with your correct data and model
