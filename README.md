@@ -9,11 +9,8 @@ repository. I haven't tried finetuning Evo 2 1B or 40B using savanna, but they
   to BIN and IDX files using [this
   script](https://github.com/Zymrael/savanna/blob/main/tools/preprocess_data.py).
   For the tokenizer type, use CharLevelTokenizer. You can run the script from
-  the terminal using a command like the one below. Notice that without the
-  `--enforce-sample-length` flag, you get [contiguous
-  packing](https://huggingface.co/blog/sirluk/llm-sequence-packing#the-solution-sequence-packing),
-  whereas with the flag, you get right-padding. You might want one or the other
-  depending on your use case.
+  the terminal using a command like the one below. See the [section on
+  packing](#packing) below for more on the `--enforce-sample-length` flag.
 
 ```bash
 python tools/preprocess_data.py --input data/raw/data_for_train.jsonl --output-prefix data/run/padded4096_data/train --workers 8 --enforce-sample-length 4096 --tokenizer-type CharLevelTokenizer
@@ -62,3 +59,47 @@ python extend_filter.py \
   script](https://github.com/Zymrael/savanna/blob/main/tools/statedict_convert_checkpoint_to_vortex.py).
   After converting, the vortex checkpoint still needs one key rename. This repo
   contains a script called `hotfix_norm_scale.py` that does this.
+
+## Packing
+
+* As a recap, the command for preprocessing your data from JSONL to BIN and IDX
+  files is:
+
+```bash
+python tools/preprocess_data.py --input data/raw/data_for_train.jsonl --output-prefix data/run/padded4096_data/train --workers 8 --enforce-sample-length 4096 --tokenizer-type CharLevelTokenizer
+```
+
+* Notice that without the `--enforce-sample-length` flag, you get [contiguous
+  packing](https://huggingface.co/blog/sirluk/llm-sequence-packing#the-solution-sequence-packing),
+  whereas with the flag, you get right-padding. You might want one or the other
+  depending on your use case.
+* For a concrete example, if you want to *condition* your prompts to Evo 2, you
+  will have sequences like `[CLADE_TYPE_A]ACGTG...`, `[CLADE_TYPE_B]CTCTA...`,
+  `[CLADE_TYPE_C]GCTCA...`, and so on. The idea is that sequences from Clade A
+  look meaningully different from sequences in Clade B. If you prepend a clade
+  token, Evo 2 will learn to associate the clade token with the distribution of
+  sequences that follow it. After finetuning, if you prompt Evo 2 with
+  `[CLADE_TYPE_A]`, it will generate a sequence similar to the sequences it has
+  seen in Clade A.
+* Sidenote: for concreteness, the tokens `[CLADE_TYPE_A]`, `[CLADE_TYPE_B]`, and
+  `[CLADE_TYPE_C]` can be `1`, `2`, and `3`, or any of the 256 "[extended
+  ASCII](https://en.wikipedia.org/wiki/Extended_ASCII)" characters. As [this
+  `savanna`
+  code](https://github.com/Zymrael/savanna/blob/80377fe74b7acd41253e03cba3750a5fcd57e32b/savanna/tokenizer/tokenizer.py#L277)
+  shows, Evo 2 uses a custom `CharLevelTokenizer` that simply maps characters to
+  their `np.uint8` (i.e., 2 ** 8 = 256-digit) representations, the [Evo 2
+  config](https://github.com/ArcInstitute/evo2/blob/main/evo2/configs/evo2-7b-1m.yml)
+  gives Evo 2 a comfortable vocabulary size of 512 (actually twice the room
+  `CharLevelTokenizer` needs).
+* To make sure that the clade type token is always associated with the
+  nucleotide sequences, you want right-padding. Otherwise, the clade indicator
+  token might get left behind in a previous sequence.
+* If you don't want to prompt with a start token, and just want to finetune Evo
+  2 in the sense of continued pretraining on new data (for example, if you're
+  finetuning the model on a new batch of metagenomic data), use contiguous
+  packing for training efficiency. Right padding fills unused positions with
+  `[PAD]` tokens on which loss is masked, wasting compute.
+* Here's a schematic that helps visualize what happens with contiguous and right
+  padding.
+
+![](/assets/packing_schematic.png)
