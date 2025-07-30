@@ -13,7 +13,7 @@ import argparse, torch, os
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt", required=True, help="Path to bad checkpoint")
-    parser.add_argument("--last-block", type=int, required=True,
+    parser.add_argument("--last-block", type=int, default=32,
                         help="index of the *final* block (e.g. 32)")
     parser.add_argument("--out", default=None, help="Path to save fixed ckpt")
     args = parser.parse_args()
