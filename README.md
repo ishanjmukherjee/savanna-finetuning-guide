@@ -72,7 +72,12 @@ python extend_filter.py \
     `/storage/evo2-human-vortex-finetune/epoch10/iter_10.pt`. The script
     typically executes in under 10 seconds.
   * After converting, the vortex checkpoint still needs one key rename. This
-    repo contains a script called `hotfix_norm_scale.py` that does this.
+    repo contains a script called `hotfix_norm_scale.py` that does this. Usage
+    is
+
+```bash
+python --ckpt /storage/evo2-human-vortex-finetune/epoch10/iter_10.pt
+```
 
 ## Packing
 
