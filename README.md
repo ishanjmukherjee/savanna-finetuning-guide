@@ -55,10 +55,24 @@ python extend_filter.py \
   configs, then submit the job with a simple sbatch.
 * The finetuned savanna checkpoint needs to be converted to a vortex checkpoint
   to be usable for inference with the [dna-gen
-  repository](https://github.com/evo-design/dna-gen). Use [this
-  script](https://github.com/Zymrael/savanna/blob/main/tools/statedict_convert_checkpoint_to_vortex.py).
-  After converting, the vortex checkpoint still needs one key rename. This repo
-  contains a script called `hotfix_norm_scale.py` that does this.
+  repository](https://github.com/evo-design/dna-gen).
+  * Use [this
+    script](https://github.com/Zymrael/savanna/blob/main/tools/statedict_convert_checkpoint_to_vortex.py).
+    To use it, first `mv` it out of `tools/` and into the root directory. Then,
+    scroll down to `main()` and edit `checkpoint_path` with the savanna PT file
+    to be converted (would look something like
+    `/storage/evo2-human-finetune/global_step100000/mp_rank_00_model_states.pt`),
+    `config_path` with the model config YAML you used (a copy will be saved in
+    `/storage/evo2-human-finetune/global_step100000/configs/the-config-name-i-used.yml`),
+    `new_checkpoint_path` with the directory where you want the vortex
+    checkpoint to be saved (something like
+    `/storage/evo2-human-vortex-finetune/epoch10/`), and `iteration` with
+    whatever number you like (it's just used for naming the file; let's say you
+    go with `10`). The vortex checkpoint will be saved to
+    `/storage/evo2-human-vortex-finetune/epoch10/iter_10.pt`. The script
+    typically executes in under 10 seconds.
+  * After converting, the vortex checkpoint still needs one key rename. This
+    repo contains a script called `hotfix_norm_scale.py` that does this.
 
 ## Packing
 
